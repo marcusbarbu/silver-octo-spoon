@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Hello OpenCV.js</title>
+</head>
+<body>
+<h2>Hello OpenCV.js asdfasdf</h2>
+<div>
+ <div class="inputoutput">
+ <img id="imageSrc" alt="No Image" />
+ <div class="caption">imageSrc <input type="file" id="fileInput" name="file" /></div>
+ </div>
+ <video id="videoInput" width="320" height="480">asdfasdf</video>
+ <canvas id="canvasFrame"></canvas>
+ <div id="error-log"><p>start error log</p></div>
+</div>
+<script type="text/javascript">
+// schedule the first one.
+let height = 240;
+let width = 320;
+
+
+function main(){
+    console.log = (function (old_function, div_log) { 
+        return function (text) {
+            // div_log.textContent += (text+"\r\n")
+            div_log.innerHTML += "<p>"+text+"</p>"
+            old_function(text);
+        };
+    } (console.log.bind(console), document.getElementById("error-log")));
+    console.log("after cl rebind")
+    let video = document.getElementById("videoInput"); // video is the id of video tag
+    console.log("after video")
+    navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+    .then(function(stream) {
+        console.log("in the beginning")
+        video.srcObject = stream;
+        video.play();
+        console.log("in the end")
+    })
+    .catch(function(err) {
+        console.log("An error occurred! " + err);
+    });
+    console.log("after user media")
+    let canvasFrame = document.getElementById("canvasFrame"); // canvasFrame is the id of <canvas>
+    let context = canvasFrame.getContext("2d");
+    let src = new cv.Mat(height, width, cv.CV_8UC4);
+    let dst = new cv.Mat(height, width, cv.CV_8UC1);
+
+    const FPS = 30;
+    function processVideo() {
+        // console.log("foo")
+        let begin = Date.now();
+        context.drawImage(video, 0, 0, width, height);
+        src.data.set(context.getImageData(0, 0, width, height).data);
+        cv.cvtColor(src, dst, cv.COLOR_RGBA2GRAY);
+        // cv.imshow("canvasOutput", dst); // canvasOutput is the id of another <canvas>;
+        // schedule next one.
+        let delay = 1000/FPS - (Date.now() - begin);
+        setTimeout(processVideo, delay);
+    }
+    // schedule first one.
+    setTimeout(processVideo, 0);
+}
+
+
+
+
+var Module = {
+ // https://emscripten.org/docs/api_reference/module.html#Module.onRuntimeInitialized
+ onRuntimeInitialized() {
+
+    main()
+
+ }
+};
+</script>
+<script async src="https://docs.opencv.org/4.5.0/opencv.js" type="text/javascript"></script>
+</body>
+</html>
